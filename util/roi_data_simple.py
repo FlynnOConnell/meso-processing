@@ -3,7 +3,7 @@ Simple data structure for ROI data.
 
 Made to emulate ScanImage's RoiDataSimple class.
 
-Author: Flynn OConnell < FlynnOConnell@gmail.com >
+Author: Flynn OConnell - FlynnOConnell@gmail.com
 
 Notes:
     The image data is stored in a list of lists of numpy arrays.
@@ -17,15 +17,15 @@ class RoiDataSimple:
         self.hRoi = None
         self.zs = []
         self.channels = []
-        self.imageData = []  # Top level - for channels
+        self.imageData = [] 
 
     def add_channel(self):
-        self.imageData.append([])  # New channel
+        self.imageData.append([]) 
 
     def add_volume_to_channel(self, channel_idx):
         if len(self.imageData) <= channel_idx:
-            self.add_channel()  # Add new channel if doesn't exist
-        self.imageData[channel_idx].append([])  # New volume
+            self.add_channel()
+        self.imageData[channel_idx].append([])
 
     def add_image_to_volume(self, channel_idx, volume_idx, img_data):
         if len(self.imageData) <= channel_idx:
