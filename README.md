@@ -1,6 +1,6 @@
 # LBM and Mesoscopic Data Processing in Python
 
-A *very* rough and dirty draft of a python translation of the Light Beads Microscopy with MAxiMuM Module: Data processing pipeline and work flow from the Vaziri Lab.
+A *very* rough and dirty draft of a python translation of the Light Beads Microscopy with MAxiMuM Module: Data processing pipeline and work flow from the [Vaziri Lab](https://vaziri.rockefeller.edu/).
 
 Original MATLAB code/software written by Jeffrey Demas: https://github.com/vazirilab/MAxiMuM_processing_tools 
 
