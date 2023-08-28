@@ -1,3 +1,17 @@
+"""
+A *very* rough and dirty draft of a python translation of:
+
+https://github.com/vazirilab/MAxiMuM_processing_tools :
+Light Beads Microscopy with MAxiMuM Module: Data processing pipeline and work flow.
+
+Python has a lot of advantages, namely the CaImAn, Suite2p and NormCorre libraries no
+longer maintain their MATLAB versions.
+
+This is both the start of a library to process LBM and general mesoscopic datasets, as well
+as a way to learn more about the LBM data processing pipeline.
+
+"""
+
 from pathlib import Path
 import json
 import numpy as np
