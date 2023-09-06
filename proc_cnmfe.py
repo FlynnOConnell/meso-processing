@@ -277,10 +277,39 @@ def find_large_motion_jumps(shifts, threshold=10):
     return jump_frames
 
 
+def inspect_correlation_pnr(correlation_image_pnr, pnr_image):
+    """
+    inspect correlation and pnr images to infer the min_corr, min_pnr
+
+    Args:
+        correlation_image_pnr: ndarray
+            correlation image created with caiman.summary_images.correlation_pnr
+
+        pnr_image: ndarray
+            peak-to-noise image created with caiman.summary_images.correlation_pnr
+    """
+    fig, axs = plt.subplots(1, 2, figsize=(10, 4))
+
+    # Plot correlation image
+    ax1 = axs[0]
+    im_cn = ax1.imshow(correlation_image_pnr, cmap='jet', aspect='auto')
+    ax1.set_title('Correlation Image')
+    fig.colorbar(im_cn, ax=ax1)
+
+    # Plot PNR image
+    ax2 = axs[1]
+    im_pnr = ax2.imshow(pnr_image, cmap='jet', aspect='auto')
+    ax2.set_title('PNR')
+    fig.colorbar(im_pnr, ax=ax2)
+
+    plt.tight_layout()
+    plt.show()
+
+
 # Main Execution
 if __name__ == "__main__":
     do_mc = False
-    ca_path = Path.home() / "data"
+    ca_path = Path.home() / "data" / "ca"
     filename = ca_path / "Spatial_downsam.tiff"
     savepath = ca_path / "figs"
     savepath.mkdir(exist_ok=True, parents=True)
@@ -301,11 +330,11 @@ if __name__ == "__main__":
         fname_new = mc.fname_tot_els if motion else mc.fname_tot_rig
         plot_shifts(mc.shifts_rig, title="Rigid shifts")
     else:
-        fname_new = str(Path.home().joinpath("data", "ca", "Spatial_downsam_mc.tif"))
+        fname_new = str(Path.home().joinpath("data", "ca", "Spatial_downsam.tiff"))
     # plot shifts
 
     print("Skipping motion correction")
-    mmap_files = list(Path.home().joinpath("data").glob("*.mmap"))
+    mmap_files = list(Path.home().joinpath("data", "ca").glob("*.mmap"))
     if len(mmap_files) > 0:
         fname_new = str(mmap_files[0])
         bord_px = 0
@@ -319,19 +348,12 @@ if __name__ == "__main__":
     plot_time_series(
         Yr, dims, 50, 50
     )  # Change 50, 50 to the x, y coordinates you are interested in
-    plot_histogram_first_frame(images)
-    plot_montage(images[:10])
-
-    # shifts = np.array(mc.shifts_rig)  # Assuming mc.shifts_rig stores the shifts
-    # threshold = 10  # Define your own threshold
-    # jump_frames = find_large_motion_jumps(shifts, threshold)
 
     opts = set_cnmfe_params(opts, bord_px)
     gSig = opts.get_group("init")["gSig"]
     cn_filter, cnr = inspect_summary_images(images, gSig)
     cnm = run_cnmfe(images, n_processes, dview, opts)
     cnm = evaluate_components(cnm, images, dview)
-    get_plots(cnm, cn_filter)
 
     # Stop the cluster
     cm.stop_server(dview=dview)

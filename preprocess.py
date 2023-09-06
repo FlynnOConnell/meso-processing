@@ -20,11 +20,11 @@ from util import parse_key_value
 from util.return_scan_offset import return_scan_offset
 from util.fix_scan_phase import fix_scan_phase
 from util.roi_data_simple import RoiDataSimple
-
 import ScanImageTiffReader
 
 if __name__ == "__main__":
-    path = Path(r"C:\Users\Flynn\Dropbox\RBO\LBM-sample\spon_6p45Hz_2mm_75pct_00001_00001.tif")
+    home = Path.home()
+    path = Path(home / 'data' / 'LBM' / 'spon_6p45Hz_2mm_75pct_00001_00001.tif')
     with ScanImageTiffReader.ScanImageTiffReader(str(path)) as reader:
         metadata_str = reader.metadata()
         data = reader.data()
@@ -76,7 +76,6 @@ if __name__ == "__main__":
     roi_data = {}
     roi_group = metadata_json['RoiGroups']['imagingRoiGroup']
     for i in range(num_rois):
-        # Assuming you have a similar class in Python
         rdata = RoiDataSimple()
         rdata.hRoi = roi_group['rois'][i]
         rdata.channels = metadata_kv['SI.hChannels.channelSave']

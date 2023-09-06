@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.signal import correlate, correlation_lags
+from scipy import signal
 
 
 def return_scan_offset(Iin, dim):
@@ -91,7 +91,7 @@ def return_scan_offset(Iin, dim):
     Iv1 = Iv1[:, np.newaxis]
     Iv2 = Iv2[:, np.newaxis]
 
-    r_full = correlate(Iv1[:, 0], Iv2[:, 0], mode='full', method='auto')
+    r_full = signal.correlate(Iv1[:, 0], Iv2[:, 0], mode='full', method='auto')
     unbiased_scale = len(Iv1) - np.abs(np.arange(-len(Iv1) + 1, len(Iv1)))
     r = r_full / unbiased_scale
 
