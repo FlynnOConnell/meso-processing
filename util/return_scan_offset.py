@@ -1,8 +1,8 @@
 import numpy as np
-from scipy import signal
+from scipy.signal import correlate, correlation_lags
 
 
-def return_scan_offset(Iin, dim):
+def return_scan_offset(image_in, dim):
     """
     Compute the scan offset correction between interleaved lines or columns in an image.
 
@@ -13,7 +13,7 @@ def return_scan_offset(Iin, dim):
 
     Parameters:
     -----------
-    Iin : ndarray
+    image_in : ndarray
         Input image or volume. It can be 2D, 3D, or 4D. The dimensions represent
         [height, width], [height, width, time], or [height, width, time, channel/plane],
         respectively.
@@ -40,18 +40,18 @@ def return_scan_offset(Iin, dim):
     corresponding lag value indicates the amount of misalignment.
     """
 
-    if len(Iin.shape) == 3:
-        Iin = np.mean(Iin, axis=2)
-    elif len(Iin.shape) == 4:
-        Iin = np.mean(np.mean(Iin, axis=3), axis=2)
+    if len(image_in.shape) == 3:
+        image_in = np.mean(image_in, axis=2)
+    elif len(image_in.shape) == 4:
+        image_in = np.mean(np.mean(image_in, axis=3), axis=2)
 
     n = 8
 
     Iv1 = None
     Iv2 = None
     if dim == 1:
-        Iv1 = Iin[::2, :]
-        Iv2 = Iin[1::2, :]
+        Iv1 = image_in[::2, :]
+        Iv2 = image_in[1::2, :]
 
         min_len = min(Iv1.shape[0], Iv2.shape[0])
         Iv1 = Iv1[:min_len, :]
@@ -66,8 +66,8 @@ def return_scan_offset(Iin, dim):
         Iv2 = Iv2.T.ravel(order='F')
 
     elif dim == 2:
-        Iv1 = Iin[:, ::2]
-        Iv2 = Iin[:, 1::2]
+        Iv1 = image_in[:, ::2]
+        Iv2 = image_in[:, 1::2]
 
         min_len = min(Iv1.shape[1], Iv2.shape[1])
         Iv1 = Iv1[:, :min_len]
@@ -91,7 +91,7 @@ def return_scan_offset(Iin, dim):
     Iv1 = Iv1[:, np.newaxis]
     Iv2 = Iv2[:, np.newaxis]
 
-    r_full = signal.correlate(Iv1[:, 0], Iv2[:, 0], mode='full', method='auto')
+    r_full = correlate(Iv1[:, 0], Iv2[:, 0], mode='full', method='auto')
     unbiased_scale = len(Iv1) - np.abs(np.arange(-len(Iv1) + 1, len(Iv1)))
     r = r_full / unbiased_scale
 
