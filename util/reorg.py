@@ -22,9 +22,6 @@ def reorganize(num_px, num_channels, num_rois, num_frames, roi_data):
     Returns:
         np.ndarray: A numpy array containing the reorganized image data, with adjustments applied to
                     each channel, ROI, and frame. The array has a data type of int.
-
-    Raises:
-        (Any potential exceptions that might be raised during execution)
     """
 
     imageData = []
