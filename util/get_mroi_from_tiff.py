@@ -19,8 +19,12 @@ from roi_data_simple import RoiDataSimple
 
 
 def get_mroi_data_from_tiff(
-        metadata_json: dict, metadata_kv: dict,
-        data: np.ndarray, num_channels: int, num_volumes: int, num_rois: int
+    metadata_json: dict,
+    metadata_kv: dict,
+    data: np.ndarray,
+    num_channels: int,
+    num_volumes: int,
+    num_rois: int,
 ):
     """
     Extracts multi-ROI (Region of Interest) data from a TIFF image based on metadata.
@@ -41,8 +45,10 @@ def get_mroi_data_from_tiff(
         num_rois (int): Number of Regions of Interest.
 
     Returns:
-        dict: A dictionary where keys are ROI indices and values are instances of RoiDataSimple,
+        roi_data (dict): A dictionary where keys are ROI indices and values are instances of RoiDataSimple,
             which store the extracted data for each ROI.
+        roi_group (dict): A dictionary containing the metadata for the ROI group.
+
 
     Notes:
         The function currently assumes a certain structure for the `metadata_json` and `metadata_kv`
@@ -57,13 +63,16 @@ def get_mroi_data_from_tiff(
         >>> metadata = {"RoiGroups": {"imagingRoiGroup": ...}}
         >>> metadata_keyvals = {"SI.hScan2D.flytoTimePerScanfield": ...}
         >>> image_data = np.random.rand(512, 512, 2, 10)
-        >>> rois = get_mroi_data_from_tiff(metadata_keyvals, metadata_kv, image_data, 2, 10, 5)
+        >>> rois, group = get_mroi_data_from_tiff(metadata_keyvals, metadata_kv, image_data, 2, 10, 5)
     """
     numLinesBetweenScanfields = np.round(
-        metadata_kv['SI.hScan2D.flytoTimePerScanfield'] / float(metadata_kv['SI.hRoiManager.linePeriod']), 0)
+        metadata_kv["SI.hScan2D.flytoTimePerScanfield"]
+        / float(metadata_kv["SI.hRoiManager.linePeriod"]),
+        0,
+    )
 
     #  For us, always 0 ? Correspondes to number of slices in the stack
-    stackZsAvailable = metadata_kv['SI.hStackManager.zs']
+    stackZsAvailable = metadata_kv["SI.hStackManager.zs"]
     if isinstance(stackZsAvailable, (int, float)):
         stackZsAvailable = 1
     else:
@@ -79,40 +88,48 @@ def get_mroi_data_from_tiff(
 
     num_image_categories = 1
     roi_data = {}
-    roi_group = metadata_json['RoiGroups']['imagingRoiGroup']
+    roi_group = metadata_json["RoiGroups"]["imagingRoiGroup"]
     for i in range(num_rois):
         rdata = RoiDataSimple()
-        rdata.hRoi = roi_group['rois'][i]
-        rdata.channels = metadata_kv['SI.hChannels.channelSave']
+        rdata.hRoi = roi_group["rois"][i]
+        rdata.channels = metadata_kv["SI.hChannels.channelSave"]
 
-        if isinstance(rdata.hRoi['zs'], (int, float)):
+        if isinstance(rdata.hRoi["zs"], (int, float)):
             lenRoiZs = 1
         else:
-            lenRoiZs = len(rdata.hRoi['zs'])
-        zsHasRoi = np.zeros_like(stackZsAvailable, dtype=int)  # This should likely go outside the for-loop
+            lenRoiZs = len(rdata.hRoi["zs"])
+        zsHasRoi = np.zeros_like(
+            stackZsAvailable, dtype=int
+        )  # This should likely go outside the for-loop
 
         # We can probably eliminate the else case to this if statement
         # ScanImage has other cases that don't pertain to us... keeping here for now
         if lenRoiZs == 1:
             # We can also probably eliminate this if statement
-            if rdata.hRoi['discretePlaneMode']:
-                zsHasRoi = (stackZsAvailable == rdata.hRoi['zs'][0]).astype(int)
-                roi_img_height_info[i, np.where(zsHasRoi == 1)] = rdata.hRoi['scanfields']['pixelResolutionXY'][1]
+            if rdata.hRoi["discretePlaneMode"]:
+                zsHasRoi = (stackZsAvailable == rdata.hRoi["zs"][0]).astype(int)
+                roi_img_height_info[i, np.where(zsHasRoi == 1)] = rdata.hRoi[
+                    "scanfields"
+                ]["pixelResolutionXY"][1]
             else:
                 # The roi extends from -Inf to Inf
                 zsHasRoi = np.ones_like(stackZsAvailable, dtype=int)
                 # The height doesn't change for the case of single-scanfields
-                roi_img_height_info[i, :] = rdata.hRoi['scanfields']['pixelResolutionXY'][1]
+                roi_img_height_info[i, :] = rdata.hRoi["scanfields"][
+                    "pixelResolutionXY"
+                ][1]
         else:
-            minVal = rdata.hRoi['zs'][0]
-            maxVal = rdata.hRoi['zs'][-1]
-            idxRange = np.where((stackZsAvailable >= minVal) & (stackZsAvailable <= maxVal))[0]
+            minVal = rdata.hRoi["zs"][0]
+            maxVal = rdata.hRoi["zs"][-1]
+            idxRange = np.where(
+                (stackZsAvailable >= minVal) & (stackZsAvailable <= maxVal)
+            )[0]
 
             for j in idxRange:
                 s = j
                 sf = rdata.hRoi.get(stackZsAvailable[s])
                 if sf:
-                    roi_img_height_info[i, s] = sf['pixelResolution'][1]
+                    roi_img_height_info[i, s] = sf["pixelResolution"][1]
                     zsHasRoi[s] = 1
 
         # We only need to fill in one row, this likely won't work for multiple zs
@@ -128,7 +145,9 @@ def get_mroi_data_from_tiff(
             roi_image_cnt = np.zeros(num_rois, dtype=int)
             num_slices = [1]  # Placeholder
             for curr_slice in num_slices:
-                num_curr_image_rois = np.sum(roi_info).astype(int)  # Adjust for other zs values
+                num_curr_image_rois = np.sum(roi_info).astype(
+                    int
+                )  # Adjust for other zs values
                 roi_ids = np.where(roi_info[:] == 1)[0]
 
                 cnt = 1
@@ -140,10 +159,14 @@ def get_mroi_data_from_tiff(
                         img_offset_y = 0
                     else:
                         # For the rest of the rois, there will be a recurring numLinesBetweenScanfields spacing
-                        img_offset_y = img_offset_y + roi_img_height + numLinesBetweenScanfields
+                        img_offset_y = (
+                            img_offset_y + roi_img_height + numLinesBetweenScanfields
+                        )
 
                     # The width of the scanfield doesn't change
-                    roi_img_width = roi_data[roi_idx].hRoi['scanfields']['pixelResolutionXY'][0]
+                    roi_img_width = roi_data[roi_idx].hRoi["scanfields"][
+                        "pixelResolutionXY"
+                    ][0]
                     # The height of the scanfield depends on the interpolation of scanfields within existing fields
                     roi_img_height = roi_img_height_info[roi_idx].astype(int)
                     roi_img_height_range = np.arange(0, roi_img_height)[:, None]
@@ -155,11 +178,10 @@ def get_mroi_data_from_tiff(
                     x_indices = (img_offset_x + roi_img_width_range).astype(int)
 
                     extracted_data = data[
-                        y_indices,
-                        x_indices,
-                        curr_channel,
-                        curr_volume
+                        y_indices, x_indices, curr_channel, curr_volume
                     ]
-                    roi_data[roi_idx].add_image_to_volume(curr_channel, curr_volume, extracted_data)
+                    roi_data[roi_idx].add_image_to_volume(
+                        curr_channel, curr_volume, extracted_data
+                    )
                     cnt += 1
-    return roi_data
+    return roi_data, roi_group
