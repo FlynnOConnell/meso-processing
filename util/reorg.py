@@ -1,6 +1,6 @@
 import numpy as np
-from util.return_scan_offset import return_scan_offset
-from util.fix_scan_phase import fix_scan_phase
+from util.scan import return_scan_offset
+from util.scan import fix_scan_phase
 
 
 def reorganize(num_px, num_channels, num_rois, num_frames, roi_data):

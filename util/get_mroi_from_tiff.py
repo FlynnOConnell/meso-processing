@@ -72,7 +72,8 @@ def get_mroi_data_from_tiff(
     # roi_info is a little more complicated in python with array concatenation
     # Each stackZsAvailable increment will increase the length of the axis by 1
     # We don't actually need to handle this because in our case, it is 0 (or a single value)
-    # So not worrying about it now: roi_info = np.zeros((num_rois, stackZsAvailable))  # MATLAB Translation
+    # So not worrying about it now, heres the matlab translation nonetheless:
+    # roi_info = np.zeros((num_rois, stackZsAvailable))
     roi_info = np.zeros((num_rois,))
     roi_img_height_info = np.zeros((num_rois, stackZsAvailable))
 
@@ -80,7 +81,6 @@ def get_mroi_data_from_tiff(
     roi_data = {}
     roi_group = metadata_json['RoiGroups']['imagingRoiGroup']
     for i in range(num_rois):
-        # Assuming you have a similar class in Python
         rdata = RoiDataSimple()
         rdata.hRoi = roi_group['rois'][i]
         rdata.channels = metadata_kv['SI.hChannels.channelSave']
@@ -92,6 +92,7 @@ def get_mroi_data_from_tiff(
         zsHasRoi = np.zeros_like(stackZsAvailable, dtype=int)  # This should likely go outside the for-loop
 
         # We can probably eliminate the else case to this if statement
+        # ScanImage has other cases that don't pertain to us... keeping here for now
         if lenRoiZs == 1:
             # We can also probably eliminate this if statement
             if rdata.hRoi['discretePlaneMode']:
@@ -131,7 +132,6 @@ def get_mroi_data_from_tiff(
                 roi_ids = np.where(roi_info[:] == 1)[0]
 
                 cnt = 1
-                prev_roi_img_height = 0
                 img_offset_x, img_offset_y, roi_img_height = None, None, None
                 for roi_idx in roi_ids:
                     if cnt == 1:
@@ -146,7 +146,6 @@ def get_mroi_data_from_tiff(
                     roi_img_width = roi_data[roi_idx].hRoi['scanfields']['pixelResolutionXY'][0]
                     # The height of the scanfield depends on the interpolation of scanfields within existing fields
                     roi_img_height = roi_img_height_info[roi_idx].astype(int)
-                    # Need to account for array shapes when indexing with numpy (ugh)
                     roi_img_height_range = np.arange(0, roi_img_height)[:, None]
                     roi_img_width_range = np.arange(0, roi_img_width)
                     roi_image_cnt[roi_idx] += 1
@@ -163,3 +162,4 @@ def get_mroi_data_from_tiff(
                     ]
                     roi_data[roi_idx].add_image_to_volume(curr_channel, curr_volume, extracted_data)
                     cnt += 1
+    return roi_data

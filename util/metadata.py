@@ -15,7 +15,7 @@ def _parse_value(value_str):
         return float('inf')
     if re.match(r'^\d+(\.\d+)?$', value_str):
         return float(value_str) if '.' in value_str else int(value_str)
-    if re.match(r'^\[(.*)\]$', value_str):
+    if re.match(r'^\[(.*)]$', value_str):
         return [_parse_value(v.strip()) for v in value_str[1:-1].split()]
     return value_str
 

@@ -15,37 +15,24 @@ as a way to learn more about the LBM data processing pipeline.
 from pathlib import Path
 import json
 import numpy as np
-
+import util
 from util import parse_key_value
-from util.return_scan_offset import return_scan_offset
-from util.fix_scan_phase import fix_scan_phase
+from util.scan import return_scan_offset
+from util.scan import fix_scan_phase
 from util.roi_data_simple import RoiDataSimple
+from util.metadata import parse
+from util.reorg import reorganize
 import ScanImageTiffReader
 
 if __name__ == "__main__":
     home = Path.home()
-    path = Path(home / 'data' / 'LBM' / 'spon_6p45Hz_2mm_75pct_00001_00001.tif')
+    path = Path(home / 'data' / 'lbm' / 'spon_6p45Hz_2mm_75pct_00001_00001.tif')
     with ScanImageTiffReader.ScanImageTiffReader(str(path)) as reader:
         metadata_str = reader.metadata()
         data = reader.data()
-    lines = metadata_str.split('\n')
-    metadata_kv = {}
-    json_portion = []
-    parsing_json = False
 
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-        if line.startswith('SI.'):
-            key, value = parse_key_value(line)
-            metadata_kv[key] = value
-        elif line.startswith('{'):
-            parsing_json = True
-        if parsing_json:
-            json_portion.append(line)
-    metadata_json = json.loads('\n'.join(json_portion))
-    del line, key, value, metadata_str
+    # Deal with the non-json serializable string returned from the ScanImageTiffReader
+    metadata_kv, metadata_json = util.parse(metadata_str)
 
     num_channels = 30
     num_volumes = data.shape[0] // num_channels
@@ -68,7 +55,8 @@ if __name__ == "__main__":
     # roi_info is a little more complicated in python with array concatenation
     # Each stackZsAvailable increment will increase the length of the axis by 1
     # We don't actually need to handle this because in our case, it is 0 (or a single value)
-    # So not worrying about it now: roi_info = np.zeros((num_rois, stackZsAvailable))  # MATLAB Translation
+    # So not worrying about it now, the matlab translation nontheless:
+    # roi_info = np.zeros((num_rois, stackZsAvailable))
     roi_info = np.zeros((num_rois,))
     roi_img_height_info = np.zeros((num_rois, stackZsAvailable))
 
@@ -157,18 +145,7 @@ if __name__ == "__main__":
                     roi_data[roi_idx].add_image_to_volume(curr_channel, curr_volume, extracted_data)
                     cnt += 1
 
-    # roi_data - len(roi_data) = number of ROIs
-    #  - RoiData Object (class)
-    #     - zs (z stack, 0 for us)
-    #     - channels (channels, the same for each ROI)
-    #     - imageData (container)
-    #       - len(imageData) = number of planes/channels (z)
-    #         - len(imageData[0]) = number of frames/volumes (time)
-    #           - len(imageData[0][0]) = number of "slices", but this will always be 1 for us
-    #             - imageData[0][0][0] = the actual 2D cross-section of the image
 
-    # Lots of redundant variables due to the ScanImage calculations done manually here
-    # Keeping for comparison with MATLAB code
     num_rois = len(roi_data)
     totalFrame = len(roi_data[0].imageData[0])  # num_frames, same as num_volumes
     totalChannel = len(roi_data[0].imageData)  # num_channels, same as num_planes
@@ -198,12 +175,11 @@ if __name__ == "__main__":
                 frameTemp = np.concatenate((frameTemp, stripTemp), axis=1)
             else:
                 frameTemp = stripTemp
-            # Concatenate frameTemp to imageData along the third axis
         if len(imageData) != 0:
             imageData = np.concatenate((imageData, frameTemp), axis=2)
         else:
             imageData = frameTemp
-    # Convert imageData to a single precision float type
+    # For compatibility, convert imageData to a single precision float type
     imageData = np.array(imageData, dtype=np.float32)
 
 x = 4
