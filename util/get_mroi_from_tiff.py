@@ -15,7 +15,11 @@ roi_data - len(roi_data) = number of ROIs
 """
 
 import numpy as np
-from roi_data_simple import RoiDataSimple
+from util.roi_data_simple import RoiDataSimple
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 def get_mroi_data_from_tiff(
@@ -86,7 +90,6 @@ def get_mroi_data_from_tiff(
     roi_info = np.zeros((num_rois,))
     roi_img_height_info = np.zeros((num_rois, stackZsAvailable))
 
-    num_image_categories = 1
     roi_data = {}
     roi_group = metadata_json["RoiGroups"]["imagingRoiGroup"]
     for i in range(num_rois):
@@ -141,6 +144,8 @@ def get_mroi_data_from_tiff(
         roi_data[i] = rdata
 
     for curr_channel in range(num_channels):
+        logger.debug(f"Processing channel {curr_channel}")
+
         for curr_volume in range(num_volumes):
             roi_image_cnt = np.zeros(num_rois, dtype=int)
             num_slices = [1]  # Placeholder
