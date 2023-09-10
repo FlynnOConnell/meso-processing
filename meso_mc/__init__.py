@@ -146,3 +146,32 @@ def motion_correct(fnames, pixel_resolution, savedir, local_dview, plot):
     end = time.time()
     print(f"Mc for {ext_name} took {end - start_time} seconds.")
     return local_dview
+
+def correlation_pnr(filename):
+    from caiman.utils.visualization import inspect_correlation_pnr
+
+    # load memory mappable file
+    Yr, dims, T = cm.load_memmap(filename)
+    images = Yr.T.reshape((T,) + dims, order='F')
+
+    # compute some summary images (correlation and peak to noise)
+    cn_filter, pnr = cm.summary_images.correlation_pnr(images[::5],
+                                                        gSig=3,
+                                                       swap_dim=False)
+    # inspect the summary images and set the parameters
+    inspect_correlation_pnr(cn_filter, pnr)
+
+
+if __name__ == "__main__":
+    plane_path = Path().home() / "data" / "lbm" / "planes"
+    file_names = [f for f in plane_path.glob('*.mmap') if 'els' in f.stem]
+    plane_file = file_names[0]
+    file_mem = cm.load(str(plane_file))
+    shift_path = Path().home() / "data" / "lbm" / "figs" / "raw_shifts"
+    shift_file = [f for f in shift_path.glob('*.mmap') if 'non' in f.stem]
+    shift_mem = cm.load(str(shift_file[0]))
+    correlation_pnr(str(plane_file))
+    plt.show()
+    plt.imshow(file_mem)
+    print('done')
+
