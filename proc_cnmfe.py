@@ -78,7 +78,7 @@ def load_memmap_file(fname_new):
     Yr, dims, T = cm.load_memmap(fname_new)
     images = Yr.T.reshape((T,) + dims, order="F")
     print("number of images: ", images.shape[0])
-    return Yr, dims, T, images
+    return images
 
 
 # 5. Setting parameters for CNMF-E
@@ -347,7 +347,7 @@ if __name__ == "__main__":
     plot_mean_image(images)
     plot_time_series(
         Yr, dims, 50, 50
-    )  # Change 50, 50 to the x, y coordinates you are interested in
+    )
 
     opts = set_cnmfe_params(opts, bord_px)
     gSig = opts.get_group("init")["gSig"]
